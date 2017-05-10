@@ -1,4 +1,4 @@
-#include <math.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "mpi.h"
@@ -10,19 +10,18 @@ int main( int argc, char* argv[] ) {
     double x[N], TotalSum, ProcSum = 0.0;
     int ProcRank, ProcNum, k, i1, i2;
     float h;
-    MPI_Status Status; // Инициализация статуса MPI - данная переменная используется иногда при отправке и получении сообщений
+    MPI_Status Status;
 
     // Инициализация
     MPI_Init( &argc, &argv ); // Создаёт community из процессов
     MPI_Comm_size( MPI_COMM_WORLD, &ProcNum ); //  Раздаёт всем процессам их число  - в переменную ProcNUm
     MPI_Comm_rank( MPI_COMM_WORLD, &ProcRank );// Раздаёт каждому процессу его номер, начиная с нуля - в переменную ProcRank
 
-    // Подготовка данных, создание массива чисел на процессе номер 0. Можно , конечно, на всех сразу, но зачем создавать //нагрузки, которые можно не создавать?
     h = (b-a)/N; //шаг разбиения (нужен для применения метода левых прямоугольников)
-    std::cout<<h;
+
     if ( ProcRank == 0 ) {
         for( i1 = 0; i1 <N; ++i1 ) {
-            x[i1] = i1*i1*h; //считаем интеграл функции x^2
+            x[i1] = (a+(b-a)*i1/100);//считаем интеграл функции x
         }
     }
 
@@ -42,10 +41,10 @@ int main( int argc, char* argv[] ) {
     MPI_Reduce( &ProcSum, &TotalSum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
 
     // Вывод результата
-    if ( ProcRank == 0 ) { // условная конструкция нужна. чтобы распечаткой занимался только один процесс, в данном случае нулевой
-        // Если проверки на номер процесса не будет - то каждый процесс распечатает по строке.
-        printf("\nTotal Sum = %10.2f",TotalSum);
-    }
-    MPI_Finalize(); // Завершает использование MPI, освобождая все созданные MPI-процедурами переменные, они больше не будут //доступны, при этом все запущенные процессы никуда не деваются.
+    if ( ProcRank == 0 ) {
+        printf("\nTotal Sum = %10.2f",TotalSum*h); }
+    //выводит приближенное значение нашего интеграла (xdx = x^2/2 от 0 до 20)
+
+    MPI_Finalize(); 
     return 0;
 }
